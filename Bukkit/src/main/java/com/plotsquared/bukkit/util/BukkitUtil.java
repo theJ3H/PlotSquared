@@ -104,6 +104,35 @@ public class BukkitUtil extends WorldUtil {
                 location.getYaw(), location.getPitch());
     }
 
+    public static int getId(Material material) {
+        return material.getId();
+    }
+
+    private static Material[] MAT_CACHE = new Material[Character.MAX_VALUE];
+    static {
+        boolean legacy;
+        try {
+            Material.class.getDeclaredMethod("isLegacy");
+            legacy = true;
+        } catch (Throwable ignore) {
+            legacy = false;
+        }
+        for (Material m : Material.values()) {
+            int id = m.getId();
+            if (legacy) {
+                String name = m.name();
+                if (name.startsWith("LEGACY_")) {
+                    m = Material.getMaterial(name, true);
+                }
+            }
+            MAT_CACHE[id] = m;
+        }
+    }
+
+    public static Material getMaterial(int id) {
+        return MAT_CACHE[id];
+    }
+
     @Override
     public boolean isWorld(String worldName) {
         return getWorld(worldName) != null;
@@ -118,15 +147,22 @@ public class BukkitUtil extends WorldUtil {
     public void setSign(String worldName, int x, int y, int z, String[] lines) {
         World world = getWorld(worldName);
         Block block = world.getBlockAt(x, y, z);
-        //        block.setType(Material.AIR);
         Material type = block.getType();
-        if (type != Material.SIGN && type != Material.SIGN_POST) {
-            int data = 2;
-            if (world.getBlockAt(x, y, z + 1).getType().isSolid()) data = 2;
-            else if (world.getBlockAt(x + 1, y, z).getType().isSolid()) data = 4;
-            else if (world.getBlockAt(x, y, z - 1).getType().isSolid()) data = 3;
-            else if (world.getBlockAt(x - 1, y, z).getType().isSolid()) data = 5;
-            block.setTypeIdAndData(Material.WALL_SIGN.getId(), (byte) data, false);
+        switch (type) {
+            case SIGN:
+            case WALL_SIGN:
+            case LEGACY_WALL_SIGN:
+            case LEGACY_SIGN:
+            case LEGACY_SIGN_POST:
+                if (type != Material.SIGN && type != Material.SIGN) {
+                    int data = 2;
+                    if (world.getBlockAt(x, y, z + 1).getType().isSolid()) data = 2;
+                    else if (world.getBlockAt(x + 1, y, z).getType().isSolid()) data = 4;
+                    else if (world.getBlockAt(x, y, z - 1).getType().isSolid()) data = 3;
+                    else if (world.getBlockAt(x - 1, y, z).getType().isSolid()) data = 5;
+                    block.setType(Material.WALL_SIGN, false);
+                    block.setData((byte) data, false);
+                }
         }
         BlockState blockstate = block.getState();
         if (blockstate instanceof Sign) {
@@ -193,8 +229,12 @@ public class BukkitUtil extends WorldUtil {
                     switch (type) {
                         case WATER:
                         case LAVA:
-                        case STATIONARY_LAVA:
-                        case STATIONARY_WATER:
+                        case FLOWING_LAVA:
+                        case FLOWING_WATER:
+                        case LEGACY_WATER:
+                        case LEGACY_LAVA:
+                        case LEGACY_STATIONARY_LAVA:
+                        case LEGACY_STATIONARY_WATER:
                             return y;
                     }
                     air++;

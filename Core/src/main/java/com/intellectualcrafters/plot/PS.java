@@ -51,6 +51,7 @@ import com.intellectualcrafters.plot.util.WorldUtil;
 import com.intellectualcrafters.plot.util.block.GlobalBlockQueue;
 import com.intellectualcrafters.plot.util.expiry.ExpireManager;
 import com.intellectualcrafters.plot.util.expiry.ExpiryTask;
+import com.plotsquared.block.BlockRegistry;
 import com.plotsquared.listener.WESubscriber;
 import com.sk89q.worldedit.WorldEdit;
 import java.io.File;
@@ -80,6 +81,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -114,8 +116,11 @@ public class PS{
     public YamlConfiguration storage;
     public YamlConfiguration commands;
      // Temporary hold the plots/clusters before the worlds load
-    public HashMap<String, Set<PlotCluster>> clusters_tmp;
-    public HashMap<String, HashMap<PlotId, Plot>> plots_tmp;
+    private Map<String, Set<PlotCluster>> clusters_tmp;
+    private Map<String, HashMap<PlotId, Plot>> plots_tmp;
+
+    private BlockRegistry lastRegistry;
+    private Map<String, BlockRegistry> registries = new ConcurrentHashMap<>();
 
     private PlotAreaManager manager;
 
@@ -130,6 +135,7 @@ public class PS{
         this.IMP = iPlotMain;
         this.logger = iPlotMain;
         Settings.PLATFORM = platform;
+
         try {
             new ReflectionUtils(this.IMP.getNMSPackage());
             try {
@@ -344,6 +350,23 @@ public class PS{
         if (Settings.DEBUG) {
             PS.log(message);
         }
+    }
+
+    public <T extends BlockRegistry> T getBlockRegistry(String world) {
+        BlockRegistry tmpLastRegistry = lastRegistry;
+        if (tmpLastRegistry != null && tmpLastRegistry.isWorld(world)) {
+            return (T) tmpLastRegistry;
+        }
+        tmpLastRegistry = registries.get(world);
+        if (tmpLastRegistry == null) {
+            tmpLastRegistry = imp().getBlockRegistry(world);
+            BlockRegistry previous = registries.putIfAbsent(world, tmpLastRegistry);
+            if (previous != null) tmpLastRegistry = previous;
+            tmpLastRegistry.enable();
+        }
+        lastRegistry = tmpLastRegistry;
+        return (T) tmpLastRegistry;
+
     }
 
     /**

@@ -1,25 +1,13 @@
 package com.intellectualcrafters.plot.object;
 
+import com.intellectualcrafters.plot.PS;
 import com.intellectualcrafters.plot.config.Settings;
 
 public class PlotBlock {
 
     public static final PlotBlock EVERYTHING = new PlotBlock((short) 0, (byte) 0);
-    private static final PlotBlock[] CACHE = new PlotBlock[65535];
-    static {
-        for (int i = 0; i < 65535; i++) {
-            short id = (short) (i >> 4);
-            byte data = (byte) (i & 15);
-            CACHE[i] = new PlotBlock(id, data);
-        }
-    }
 
-    public final short id;
-    public final byte data;
-    public PlotBlock(short id, byte data) {
-        this.id = id;
-        this.data = data;
-    }
+    private char combinedId;
 
     public static PlotBlock get(char combinedId) {
         switch (combinedId) {
@@ -32,8 +20,87 @@ public class PlotBlock {
         }
     }
 
+    @Deprecated
     public static PlotBlock get(int id, int data) {
-        return Settings.Enabled_Components.BLOCK_CACHE && data > 0 ? CACHE[(id << 4) + data] : new PlotBlock((short) id, (byte) data);
+        if (Settings.Enabled_Components.BLOCK_CACHE) {
+            return PS.get().getBlockRegistry().get((id << 4) + data);
+        } else {
+            return new PlotBlock((short) id, (byte) data);
+        }
+    }
+
+    protected PlotBlock(int combinedId) {
+        this.combinedId = (char) combinedId;
+    }
+
+    @Deprecated
+    public PlotBlock(short id, byte data) {
+        combinedId = (char) ((id >> 4) + data);
+    }
+
+    @Deprecated
+    public int getId() {
+        return combinedId >> 4;
+    }
+
+    @Deprecated
+    public int getData() {
+        return combinedId & 15;
+    }
+
+    public int getCombinedId() {
+        return combinedId;
+    }
+
+    public String getName() {
+        if (this.getData() == -1) {
+            return Integer.toString(this.getId());
+        }
+        return this.getId() + ":" + this.getData();
+    }
+
+    public boolean isTransparent() {
+        return false;
+    }
+
+    public boolean isOccluding() {
+        return !isTransparent() && isSolid() && isBlock();
+    }
+
+    public boolean isSolid() {
+        return true;
+    }
+
+    public boolean isBlock() {
+        return true;
+    }
+
+    public boolean isEdible() {
+        return false;
+    }
+
+    public boolean isInteractive() {
+        return false;
+    }
+
+    public boolean isItem() {
+        return !isBlock();
+    }
+
+    public boolean isFlammable() {
+        return isBurnable();
+    }
+
+    public boolean isBurnable() {
+        return false;
+    }
+
+    public boolean isPowerable() {
+        return false;
+    }
+
+    public boolean hasGravity() {
+        return false;
     }
 
     @Override
@@ -58,9 +125,6 @@ public class PlotBlock {
 
     @Override
     public String toString() {
-        if (this.data == -1) {
-            return this.id + "";
-        }
-        return this.id + ":" + this.data;
+        return getName();
     }
 }

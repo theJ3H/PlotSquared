@@ -2,7 +2,9 @@ package com.plotsquared.bukkit.listeners;
 
 import com.google.common.base.Optional;
 import com.intellectualcrafters.plot.flag.Flags;
+import com.intellectualcrafters.plot.object.Location;
 import com.intellectualcrafters.plot.object.Plot;
+import com.intellectualcrafters.plot.object.PlotArea;
 import com.intellectualcrafters.plot.object.PlotPlayer;
 import com.plotsquared.bukkit.events.PlayerEnterPlotEvent;
 import com.plotsquared.bukkit.events.PlayerLeavePlotEvent;
@@ -117,7 +119,13 @@ public class PlotPlusListener extends PlotListener implements Listener {
     public void onItemDrop(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         PlotPlayer pp = BukkitUtil.getPlayer(player);
-        Plot plot = BukkitUtil.getLocation(player).getOwnedPlot();
+
+        Location loc = BukkitUtil.getLocation(player);
+        PlotArea area = loc.getPlotArea();
+        if (area == null) {
+            return;
+        }
+        Plot plot = area.getOwnedPlot(loc);
         if (plot == null) {
             return;
         }

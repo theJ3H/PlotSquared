@@ -4,20 +4,11 @@ import com.intellectualcrafters.plot.generator.GeneratorWrapper;
 import com.intellectualcrafters.plot.generator.HybridUtils;
 import com.intellectualcrafters.plot.generator.IndependentPlotGenerator;
 import com.intellectualcrafters.plot.logger.ILogger;
+import com.intellectualcrafters.plot.object.PlotBlock;
 import com.intellectualcrafters.plot.object.PlotPlayer;
-import com.intellectualcrafters.plot.util.AbstractTitle;
-import com.intellectualcrafters.plot.util.ChatManager;
-import com.intellectualcrafters.plot.util.ChunkManager;
-import com.intellectualcrafters.plot.util.EconHandler;
-import com.intellectualcrafters.plot.util.EventUtil;
-import com.intellectualcrafters.plot.util.InventoryUtil;
-import com.intellectualcrafters.plot.util.SchematicHandler;
-import com.intellectualcrafters.plot.util.SetupUtils;
-import com.intellectualcrafters.plot.util.TaskManager;
-import com.intellectualcrafters.plot.util.UUIDHandlerImplementation;
-import com.intellectualcrafters.plot.util.WorldUtil;
+import com.intellectualcrafters.plot.util.*;
 import com.intellectualcrafters.plot.util.block.QueueProvider;
-
+import com.plotsquared.block.BlockRegistry;
 import java.io.File;
 import java.util.List;
 
@@ -255,4 +246,16 @@ public interface IPlotMain extends ILogger {
     AbstractTitle initTitleManager();
 
     List<String> getPluginIds();
+
+    default BlockRegistry getBlockRegistry(String world) {
+        return new BlockRegistry(this, world);
+    }
+
+    default void registerBlocks(BlockRegistry registry) {
+        for (int i = 0; i < 65535; i++) {
+            short id = (short) (i >> 4);
+            byte data = (byte) (i & 15);
+            registry.register((char) i, new PlotBlock(id, data));
+        }
+    }
 }

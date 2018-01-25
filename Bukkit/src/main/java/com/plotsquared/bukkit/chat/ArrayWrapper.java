@@ -1,7 +1,5 @@
 package com.plotsquared.bukkit.chat;
 
-import org.apache.commons.lang.Validate;
-
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +43,6 @@ public final class ArrayWrapper<E> {
      * @param array The new wrapped array.
      */
     public void setArray(E[] array) {
-        Validate.notNull(array, "The array must not be null.");
         _array = array;
     }
 

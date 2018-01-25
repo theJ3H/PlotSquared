@@ -2,6 +2,7 @@ package com.intellectualcrafters.plot.commands;
 
 import com.google.common.base.Charsets;
 import com.intellectualcrafters.plot.PS;
+import com.intellectualcrafters.plot.object.Plot;
 import com.intellectualcrafters.plot.object.PlotId;
 import com.intellectualcrafters.plot.object.PlotPlayer;
 import com.intellectualcrafters.plot.object.RunnableVal2;
@@ -38,19 +39,30 @@ public class DebugImportWorlds extends Command {
         SinglePlotArea area = ((SinglePlotAreaManager) pam).getArea();
         PlotId id = new PlotId(0, 0);
         File container = PS.imp().getWorldContainer();
+        outer:
         for (File folder : container.listFiles()) {
-            String name = folder.getName();
+            String originalName = folder.getName();
+            String name = originalName;
             if (!WorldUtil.IMP.isWorld(name) && PlotId.fromString(name) == null) {
-                UUID uuid = UUIDHandler.getUUID(name, null);
-                if (uuid == null) {
-                    uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(Charsets.UTF_8));
+                UUID uuid = null;
+                while (uuid == null) {
+                    uuid = UUIDHandler.getUUID(name, null);
+                    if (uuid == null) {
+                        uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(Charsets.UTF_8));
+                    }
+                    if (uuid == null) {
+                        if (name.length() <= 4) continue outer;
+                        name = name.substring(0, name.length() - 1);
+                    }
                 }
                 while (new File(container, id.toCommaSeparatedString()).exists()) {
                     id = Auto.getNextPlotId(id, 1);
                 }
                 File newDir = new File(container, id.toCommaSeparatedString());
                 if (folder.renameTo(newDir)) {
-                    area.getPlot(id).setOwner(uuid);
+                    Plot plot = area.getPlot(id);
+                    plot.setOwner(uuid);
+                    plot.setAlias(originalName);
                 }
             }
         }
