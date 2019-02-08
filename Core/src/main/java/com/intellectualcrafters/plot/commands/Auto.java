@@ -132,6 +132,7 @@ public class Auto extends SubCommand {
                             Plot plot = plotarea.getPlotAbs(new PlotId(i, j));
                             boolean teleport = i == end.x && j == end.y;
                             plot.claim(player, teleport, null);
+                            plot.updateWorldBorder();
                         }
                     }
                     if (!plotarea.mergePlots(MainUtil.getPlotSelectionIds(start, end), true, true)) {
